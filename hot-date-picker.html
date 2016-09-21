@@ -1,10 +1,17 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/default-theme.html">
+<link rel="import" href="../paper-styles/typography.html">
+<link rel="import" href="../iron-form-element-behavior/iron-form-element-behavior.html">
 
 <!--
 `hot-date-picker`
 Minimal date picker
 
-@demo demo/index.html 
+@demo demo/index.html
 -->
 
 <dom-module id="hot-date-picker">
@@ -12,9 +19,81 @@ Minimal date picker
     <style>
       :host {
         display: block;
+        margin-top: 20px;
+        margin-bottom: 5px;
       }
+
+      .container {
+        @apply(--layout-flex-auto);
+        @apply(--layout-relative);
+
+        width: 100%;
+        max-width: 100%;
+      }
+
+      label {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        font: inherit;
+        color: var(--hot-date-picker-label-color, --secondary-text-color);
+        -webkit-transition: -webkit-transform 0.25s, width 0.25s;
+        transition: transform 0.25s, width 0.25s;
+        -webkit-transform-origin: left top;
+        transform-origin: left top;
+
+        -webkit-transform: translateY(-25%) scale(0.75);
+        transform: translateY(-25%) scale(0.75);
+        width: 133%;
+
+        @apply(--paper-font-common-nowrap);
+        @apply(--paper-font-subhead);
+      }
+
+      .day, .month, .year {
+        display: inline-block;
+      }
+      .day {
+        width: 3em;
+      }
+      .month {
+        width: 6em;
+      }
+      .year {
+        width: 4em;
+      }
+
     </style>
-    <h2>Hello [[prop1]]</h2>
+
+    <div class="container">
+      <label>{{label}} -- <b>{{_labelExtra}}</b></label>
+      <paper-input auto-validate id="day" maxlength="2" class="day" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!"></paper-input>
+
+      <!-- NOTE: MAKE DEAD SURE that you have value="[[month]]" and
+           selected="{{month}}". NOTE THE BRACKETS. -->
+      <paper-dropdown-menu id="month" value="[[month]]" class="month" name="month" label="Month">
+        <paper-listbox id="monthSelect" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
+          <paper-item label="" value="">Pick</paper-item>
+          <paper-item value="01">Jan</paper-item>
+          <paper-item value="02">Feb</paper-item>
+          <paper-item value="03">Mar</paper-item>
+          <paper-item value="04">Apr</paper-item>
+          <paper-item value="05">May</paper-item>
+          <paper-item value="06">June</paper-item>
+          <paper-item value="07">July</paper-item>
+          <paper-item value="08">Aug</paper-item>
+          <paper-item value="09">Sep</paper-item>
+          <paper-item value="10">Oct</paper-item>
+          <paper-item value="11">Nov</paper-item>
+          <paper-item value="12">Dec</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+
+      <paper-input id="year" id="year" maxlength="4" class="year" value="{{year}}" label="Year" error-message="Invalid!"></paper-input>
+    </container>
+
   </template>
 
   <script>
@@ -23,11 +102,218 @@ Minimal date picker
       is: 'hot-date-picker',
 
       properties: {
-        prop1: {
+
+
+        day: {
           type: String,
-          value: 'hot-date-picker',
         },
+        month: {
+          type: String,
+        },
+        year: {
+          type: String,
+        },
+
+        valueSetConfirmation: {
+          type: String,
+          value: "Field set!"
+        },
+
+        valueNotSetConfirmation: {
+          type: String,
+          value: "Field not set"
+        },
+
+        yearMin: {
+          type: Number
+        },
+
+        yearMax: {
+          type: Number
+        },
+
       },
+
+      behaviors: [
+        Polymer.IronFormElementBehavior
+      ],
+
+      observers: [
+        '_valueChanged(value)',
+        '_dayMonthOrYearChanged(day,month,year)',
+      ],
+
+      _oneFieldSet: function(){
+        return !!( this.$.day.value || this.$.month.value || this.$.year.value );
+      },
+
+      ready: function(){
+
+        this._labelExtra= this.valueSetConfirmation;
+        var el = this;
+
+        this.$.year.inputElement.validate = function(){
+
+          debugger;
+          // Value is empty: invalid if main element is required
+          if( this.value == '' ){
+            this.invalid = !!el.required || el._oneFieldSet();
+            debugger;
+            return !this.invalid;
+          }
+
+          var year = this.value;
+
+          if( year < el.yearMin || year > el.yearMax ){
+            this.invalid = true;
+          } else {
+            this.invalid = false;
+          }
+
+          return !this.invalid;
+        };
+
+
+        this.$.month.validate = function(){
+
+          // Value is empty: invalid if main element is required
+          if( !this.value || this.value == '' ){
+            this.invalid = !!el.required || el._oneFieldSet();
+            return !this.invalid;
+          }
+
+          this.invalid = false;
+          return !this.invalid;
+        };
+
+
+        this.$.day.inputElement.validate = function(){
+
+          // Value is empty: invalid if main element is required
+          if( this.value == '' ){
+            debugger;
+            this.invalid = !!el.required || el._oneFieldSet();
+            return !this.invalid;
+          }
+
+          // if at least one field is set, or the date is required, then
+          // the current field CANNOT be empty
+          if( ( el._oneFieldSet() || el.required ) && this.value == '' ){
+            this.invalid = true;
+            return !this.invalid;
+          };
+
+
+          var day = this.value;
+
+          function numberOfDays(year, month) {
+            var d = new Date(year, month, 0);
+            return d.getDate();
+          }
+
+          // Day cannot be below 0 regardless
+          if( day <= 0 ){
+            this.invalid = true;
+            return !this.invalid;
+          }
+
+          // We we don't have the month, we will go with a standard "31"
+          if( ! el.month ){
+            if(  day > 31 ){
+              this.invalid = true;
+              return !this.invalid;
+            }
+          }
+
+          // We have the month: doing "proper" validation, using a default
+          // non-leap year if the year isn't available
+          if( day > numberOfDays( el.year || 2001, el.month) ){
+            this.invalid = true;
+            return !this.invalid;
+          }
+
+          this.invalid = false;
+          return !this.invalid;
+        }
+      },
+
+
+      /*
+       * Reflect changes to day, month or year back to the global element's value
+       *
+      */
+      _dayMonthOrYearChanged: function(){
+
+        if( !this.day || !this.month || !this.year ){
+
+          this._protectDayMonthYear = true;
+          this.value = '';
+          this._protectDayMonthYear = false;
+
+          // async() is used because when user changes selection in paper-listbox,
+          // paper-dropdown-menu (which is this.$.month) gets notified later.
+          //this.validate();
+          this.async( function(){ this.validate(); } );
+          return;
+        }
+
+        this.formattedDay = this.day.length == 1  ?  "0" + this.day : this.day;
+
+        // FIXME: Is this the way to go?
+        this._protectDayMonthYear = true;
+        this.value = this.year + "-" + this.month + '-' + this.formattedDay;
+        this._protectDayMonthYear = false;
+
+        // async() is used because when user changes selection in paper-listbox,
+        // paper-dropdown-menu (which is this.$.month) gets notified later.
+        //this.validate();
+        this.async( function(){ this.validate(); } );
+
+      },
+
+      /*
+       * Reflect changes to value back to day, month and year
+       *
+      */
+      _valueChanged: function( v ){
+        var m;
+
+        if( v  ) this._labelExtra = this.valueSetConfirmation;
+        else this._labelExtra = this.valueNotSetConfirmation;
+
+        // FIXME: Is this the way to go?
+        if( ! this._protectDayMonthYear ){
+          if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
+            this.day = m[ 3 ];
+            this.month = m[ 2] ;
+            this.year = m[ 1 ];
+          }
+        }
+      },
+
+      /*
+       * Validate function; validation is TOTALLY delegated to the
+       * sub-elements. They will do all of work of checking if they should be
+       * set (if the parent is required, or if at least ONE sibling is set)
+      */
+      validate: function(){
+
+        this.$.day.validate();
+        this.$.month.validate();
+        this.$.year.validate();
+
+        // If MAIN element is required and it's not set, labelExtra is forced to "not set"
+        // and it returns "false"
+        if( this.required && ! this.value ){
+          this._labelExtra=this.valueNotSetConfirmation;
+          this.invalid = true;
+          return false;
+        }
+
+        // It's set as invalid if any one of the fields is invalid
+        this.invalid = this.$.day.invalid || this.$.month.invalid || this.$.year.invalid;
+        return !this.invalid;
+      }
 
     });
   </script>
