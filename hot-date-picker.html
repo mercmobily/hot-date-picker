@@ -73,8 +73,8 @@ Minimal date picker
 
       <!-- NOTE: MAKE DEAD SURE that you have value="[[month]]" and
            selected="{{month}}". NOTE THE BRACKETS. -->
-      <paper-dropdown-menu id="month" value="[[month]]" class="month" name="month" label="Month">
-        <paper-listbox class="dropdown-content" attr-for-selected="value" selected="{{month}}">
+      <paper-dropdown-menu value="[[month]]" class="month" name="month" label="Month">
+        <paper-listbox id="month" class="dropdown-content" value="[[month]]" attr-for-selected="value" selected="{{month}}">
           <paper-item label="" value="">Pick</paper-item>
           <paper-item value="01">Jan</paper-item>
           <paper-item value="02">Feb</paper-item>
@@ -277,10 +277,12 @@ Minimal date picker
 
         // FIXME: Is this the way to go?
         if( ! this._protectDayMonthYear ){
-          if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
-            this.day = m[ 3 ];
-            this.month = m[ 2] ;
-            this.year = m[ 1 ];
+          if( v && v.match ){
+            if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
+              this.day = m[ 3 ];
+              this.month = m[ 2] ;
+              this.year = m[ 1 ];
+            }
           }
         }
       },
