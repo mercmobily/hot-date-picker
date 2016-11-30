@@ -71,10 +71,8 @@ Minimal date picker
       <label>{{label}}<!-- -- <b>{{_labelExtra}}</b>--></label>
       <paper-input auto-validate id="day" maxlength="2" class="day" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!"></paper-input>
 
-      <!-- NOTE: MAKE DEAD SURE that you have value="[[month]]" and
-           selected="{{month}}". NOTE THE BRACKETS. -->
-      <paper-dropdown-menu value="[[month]]" class="month" name="month" label="Month">
-        <paper-listbox id="month" class="dropdown-content" value="[[month]]" attr-for-selected="value" selected="{{month}}">
+      <paper-dropdown-menu id="month" value="[[month]]" class="month" name="month" label="Month">
+        <paper-listbox class="dropdown-content" attr-for-selected="value" selected="{{month}}">
           <paper-item label="" value="">Pick</paper-item>
           <paper-item value="01">Jan</paper-item>
           <paper-item value="02">Feb</paper-item>
@@ -114,6 +112,11 @@ Minimal date picker
           type: String,
         },
 
+        forceInvalid: {
+          type: Boolean,
+          default: false,
+        },
+
 /*
         valueSetConfirmation: {
           type: String,
@@ -126,13 +129,6 @@ Minimal date picker
         },
 */
 
-        yearMin: {
-          type: Number
-        },
-
-        yearMax: {
-          type: Number
-        },
 
       },
 
@@ -156,26 +152,32 @@ Minimal date picker
 
         this.$.year.inputElement.validate = function(){
 
+          // Force to be invalid, element-wide
+          if( el.forceInvalid ){
+            this.invalid = true;
+            return !this.invalid;
+          }
+
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( this.value == '' ){
+          if( this.value == '' || this.value.length != 4 ){
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
 
-          var year = this.value;
-
-          if( year < el.yearMin || year > el.yearMax ){
-            this.invalid = true;
-          } else {
-            this.invalid = false;
-          }
+          this.invalid = false;
 
           return !this.invalid;
         };
 
 
         this.$.month.validate = function(){
+
+          // Force to be invalid, element-wide
+          if( el.forceInvalid ){
+            this.invalid = true;
+            return !this.invalid;
+          }
 
           // Value is empty: invalid if main element is required or one field
           // is set
@@ -190,6 +192,12 @@ Minimal date picker
 
 
         this.$.day.inputElement.validate = function(){
+
+          // Force to be invalid, element-wide
+          if( el.forceInvalid ){
+            this.invalid = true;
+            return !this.invalid;
+          }
 
           // Value is empty: invalid if main element is required or one field
           // is set
@@ -293,6 +301,8 @@ Minimal date picker
        * set (if the parent is required, or if at least ONE sibling is set)
       */
       validate: function(){
+
+        debugger;
 
         this.$.day.validate();
         this.$.month.validate();
