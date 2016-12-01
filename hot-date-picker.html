@@ -72,7 +72,7 @@ Minimal date picker
       <paper-input auto-validate id="day" maxlength="2" class="day" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!"></paper-input>
 
       <paper-dropdown-menu id="month" value="[[month]]" class="month" name="month" label="Month">
-        <paper-listbox class="dropdown-content" attr-for-selected="value" selected="{{month}}">
+        <paper-listbox id="monthListbox" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
           <paper-item label="" value="">Pick</paper-item>
           <paper-item value="01">Jan</paper-item>
           <paper-item value="02">Feb</paper-item>
@@ -115,6 +115,12 @@ Minimal date picker
         forceInvalid: {
           type: Boolean,
           default: false,
+        },
+
+        invalid: {
+          type: Boolean,
+          default: false,
+          observer: '_invalidChanged'
         },
 
 /*
@@ -179,9 +185,12 @@ Minimal date picker
             return !this.invalid;
           }
 
+          //
+          var value = el.$.monthListbox.selected;
+
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( !this.value || this.value == '' ){
+          if( !value || value == '' ){
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
@@ -219,8 +228,11 @@ Minimal date picker
             return !this.invalid;
           }
 
+          // Month could be
+          var month = el.$.monthListbox.selected;
+
           // We we don't have the month, we will go with a standard "31"
-          if( ! el.month ){
+          if( ! month ){
             if(  day > 31 ){
               this.invalid = true;
               return !this.invalid;
@@ -229,7 +241,7 @@ Minimal date picker
 
           // We have the month: doing "proper" validation, using a default
           // non-leap year if the year isn't available
-          if( day > numberOfDays( el.year || 2001, el.month) ){
+          if( day > numberOfDays( el.year || 2001, month) ){
             this.invalid = true;
             return !this.invalid;
           }
@@ -246,31 +258,17 @@ Minimal date picker
       */
       _dateChanged: function(){
 
+        this._protectDayMonthYear = true;
+
         if( !this.day || !this.month || !this.year ){
-
-          this._protectDayMonthYear = true;
           this.value = '';
-          this._protectDayMonthYear = false;
-
-          // async() is used because when user changes selection in paper-listbox,
-          // paper-dropdown-menu (which is this.$.month) gets notified later.
-          //this.validate();
-          this.async( function(){ this.validate(); } );
-          return;
+        } else {
+          var formattedDay = this.day.length == 1  ?  "0" + this.day : this.day;
+          this.value = this.year + "-" + this.month + '-' + formattedDay;
         }
 
-        var formattedDay = this.day.length == 1  ?  "0" + this.day : this.day;
-
-        // FIXME: Is this the way to go?
-        this._protectDayMonthYear = true;
-        this.value = this.year + "-" + this.month + '-' + formattedDay;
         this._protectDayMonthYear = false;
-
-        // async() is used because when user changes selection in paper-listbox,
-        // paper-dropdown-menu (which is this.$.month) gets notified later.
-        //this.validate();
-        this.async( function(){ this.validate(); } );
-
+        this.validate();
       },
 
       /*
@@ -292,6 +290,14 @@ Minimal date picker
               this.year = m[ 1 ];
             }
           }
+        }
+      },
+
+      _invalidChanged: function(){
+        if( this.invalid ){
+          this.forceInvalid = true;
+          this.validate();
+          this.forceInvalid = false;
         }
       },
 
