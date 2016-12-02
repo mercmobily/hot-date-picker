@@ -149,13 +149,20 @@ Minimal date picker
 
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( this.value == '' || this.value.length != 4 ){
+          if( this.value == '' ) {
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
 
-          this.invalid = false;
 
+          // It must be 4 characters
+          if( this.value.length != 4 ){
+            this.invalid = true;
+            return !this.invalid;
+          }
+
+          // All good
+          this.invalid = false;
           return !this.invalid;
         };
 
@@ -238,8 +245,8 @@ Minimal date picker
           this.value = this.year + "-" + this.month + '-' + formattedDay;
         }
 
-        this._protectDayMonthYear = false;
         this.validate();
+        this._protectDayMonthYear = false;
       },
 
       /*
@@ -249,19 +256,21 @@ Minimal date picker
       _valueChanged: function( v ){
         var m;
 
-        //if( v  ) this._labelExtra = this.valueSetConfirmation;
-        //else this._labelExtra = this.valueNotSetConfirmation;
+        if( this._protectDayMonthYear ) return;
 
-        // FIXME: Is this the way to go?
-        if( ! this._protectDayMonthYear ){
-          if( v && v.match ){
-            if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
-              this.day = m[ 3 ];
-              this.month = m[ 2] ;
-              this.year = m[ 1 ];
-            }
+        if( v && v.match ){
+          if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
+            this.day = m[ 3 ];
+            this.month = m[ 2] ;
+            this.year = m[ 1 ];
           }
+        } else {
+          this.day ='';
+          this.month = '';
+          this.year = '';
         }
+
+        this.validate();
       },
 
       // If invalid is set to "true", it will artificially invalidate _all_ fields
@@ -270,6 +279,10 @@ Minimal date picker
           this.$.day.invalid = true;
           this.$.month.invalid = true;
           this.$.year.invalid = true;
+        } else {
+          this.$.day.invalid = false;
+          this.$.month.invalid = false;
+          this.$.year.invalid = false;
         }
       },
 
@@ -283,14 +296,6 @@ Minimal date picker
         this.$.day.validate();
         this.$.month.validate();
         this.$.year.validate();
-
-        // If MAIN element is required and it's not set, labelExtra is forced to "not set"
-        // and it returns "false"
-        if( this.required && ! this.value ){
-          //this._labelExtra=this.valueNotSetConfirmation;
-          this.invalid = true;
-          return false;
-        }
 
         // It's set as invalid if any one of the fields is invalid
         this.invalid = this.$.day.invalid || this.$.month.invalid || this.$.year.invalid;
