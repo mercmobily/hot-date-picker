@@ -1,7 +1,9 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-input-error.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../paper-listbox/paper-listbox.html">
 <link rel="import" href="../paper-item/paper-item.html">
-<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../paper-styles/default-theme.html">
 <link rel="import" href="../paper-styles/typography.html">
@@ -19,86 +21,68 @@ Minimal date picker
     <style>
       :host {
         display: block;
-        margin-top: 20px;
-        margin-bottom: 5px;
+        padding: 8px 0;
+
+        @apply(--hot-date-picker);
+
+        --paper-input-container: {
+          padding-top: 0; /* No space for input labels, since we don't have them */
+        }
       }
-
-      .container {
-        @apply(--layout-flex-auto);
-        @apply(--layout-relative);
-
-        width: 100%;
-        max-width: 100%;
-      }
-
       label {
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        width: 100%;
-        font: inherit;
-        color: var(--hot-date-picker-label-color, --secondary-text-color);
-        -webkit-transition: -webkit-transform 0.25s, width 0.25s;
-        transition: transform 0.25s, width 0.25s;
-        -webkit-transform-origin: left top;
-        transform-origin: left top;
+        display: block;
+        color: var(--hot-date-picker-color, --secondary-text-color);
 
-        -webkit-transform: translateY(-25%) scale(0.75);
-        transform: translateY(-25%) scale(0.75);
-        width: 133%;
-
-        @apply(--paper-font-common-nowrap);
-        @apply(--paper-font-subhead);
+        @apply(--paper-font-caption)
       }
-
-      .day, .month, .year {
-        display: inline-block;
+      .inputs {
+        @apply(--layout-horizontal);
       }
       .day {
-        width: 3em;
+        flex: 1;
+        margin-right: 8px;
       }
       .month {
-        width: 6em;
+        flex: 3;
+        margin-right: 8px;
       }
       .year {
-        width: 4em;
+        flex: 2;
       }
-
     </style>
 
     <div class="container">
-      <label>{{label}}<!-- -- <b>{{_labelExtra}}</b>--></label>
+      <label>{{label}}</label>
 
+      <div class="inputs">
+        <paper-input auto-validate id="day" class="day" maxlength="2" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!" no-label-float></paper-input>
 
-      <template is="dom-if" if="[[invalid]]">
-        <div class="error">[[errorMessage]]</div>
-      </template>
+        <paper-dropdown-menu id="month" class="month" value="[[month]]" name="month" label="Month" no-label-float>
+          <paper-listbox id="monthListbox" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
+            <paper-item label="" value="">Pick</paper-item>
+            <paper-item value="01">Jan</paper-item>
+            <paper-item value="02">Feb</paper-item>
+            <paper-item value="03">Mar</paper-item>
+            <paper-item value="04">Apr</paper-item>
+            <paper-item value="05">May</paper-item>
+            <paper-item value="06">June</paper-item>
+            <paper-item value="07">July</paper-item>
+            <paper-item value="08">Aug</paper-item>
+            <paper-item value="09">Sep</paper-item>
+            <paper-item value="10">Oct</paper-item>
+            <paper-item value="11">Nov</paper-item>
+            <paper-item value="12">Dec</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
 
+        <paper-input id="year" id="year" class="year" maxlength="4" value="{{year}}" label="Year" error-message="Invalid!" no-label-float></paper-input>
 
-      <paper-input auto-validate id="day" maxlength="2" class="day" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!"></paper-input>
+        <template is="dom-if" if="[[invalid]]">
+          <paper-input-error aria-live="assertive">[[errorMessage]]</paper-input-error>
+        </template>
+      </div>
 
-      <paper-dropdown-menu id="month" value="[[month]]" class="month" name="month" label="Month">
-        <paper-listbox id="monthListbox" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
-          <paper-item label="" value="">Pick</paper-item>
-          <paper-item value="01">Jan</paper-item>
-          <paper-item value="02">Feb</paper-item>
-          <paper-item value="03">Mar</paper-item>
-          <paper-item value="04">Apr</paper-item>
-          <paper-item value="05">May</paper-item>
-          <paper-item value="06">June</paper-item>
-          <paper-item value="07">July</paper-item>
-          <paper-item value="08">Aug</paper-item>
-          <paper-item value="09">Sep</paper-item>
-          <paper-item value="10">Oct</paper-item>
-          <paper-item value="11">Nov</paper-item>
-          <paper-item value="12">Dec</paper-item>
-        </paper-listbox>
-      </paper-dropdown-menu>
-
-      <paper-input id="year" id="year" maxlength="4" class="year" value="{{year}}" label="Year" error-message="Invalid!"></paper-input>
-    </container>
-
+    </div>
   </template>
 
   <script>
@@ -153,6 +137,7 @@ Minimal date picker
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
+
 
           // It must be 4 characters
           if( this.value.length != 4 ){
