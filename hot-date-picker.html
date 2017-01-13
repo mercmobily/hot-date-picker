@@ -18,7 +18,7 @@ Minimal date picker
 
 <dom-module id="hot-date-picker">
   <template>
-    <style>
+    <style include="iron-flex">
       :host {
         display: block;
         padding: 8px 0;
@@ -29,7 +29,22 @@ Minimal date picker
           padding-top: 0; /* No space for input labels, since we don't have them */
         };
       }
-      paper-dropdown-menu {
+      label {
+        display: block;
+        @apply(--paper-font-caption);
+        color: var(--secondary-text-color);
+      }
+      .container {
+        @apply(--layout-horizontal);
+      }
+      .day {
+        @apply(--layout-flex-2);
+        margin-right: 8px;
+      }
+      .month {
+        @apply(--layout-flex-3);
+        margin-right: 8px;
+
         --paper-input-container-input: {
           box-sizing: border-box;
           margin-bottom: -1px;
@@ -38,86 +53,76 @@ Minimal date picker
           padding: 0.5rem;
         };
       }
-      label {
-        display: block;
-        color: var(--hot-date-picker-color, --secondary-text-color);
-
-        @apply(--paper-font-caption)
-      }
-      .inputs {
-        @apply(--layout-horizontal);
-      }
-      .day {
-        flex: 1;
-        margin-right: 8px;
-      }
-      .month {
-        flex: 3;
-        margin-right: 8px;
-      }
       .year {
-        flex: 2;
+        @apply(--layout-flex-2);
       }
     </style>
 
+    <label hidden$="[[!label]]">[[label]]</label>
+
     <div class="container">
-      <label>{{label}}</label>
+      <paper-input id="day"
+        class="day"
+        maxlength="2"
+        value="{{day}}"
+        name="day"
+        label="Day"
+        allowed-pattern="\d"
+        pattern="^\d\d?$"
+        auto-validate
+        no-label-float>
+      </paper-input>
 
-      <div class="inputs">
-        <paper-input auto-validate id="day" class="day" maxlength="2" value="{{day}}" name="day" label="Day" allowed-pattern="\d" pattern="^\d\d?$" error-message="Invalid!" no-label-float></paper-input>
+      <paper-dropdown-menu id="month"
+          class="month"
+          value="[[month]]"
+          name="month"
+          label="Month"
+          no-label-float>
+        <paper-listbox id="monthListbox" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
+          <paper-item value="01">Jan</paper-item>
+          <paper-item value="02">Feb</paper-item>
+          <paper-item value="03">Mar</paper-item>
+          <paper-item value="04">Apr</paper-item>
+          <paper-item value="05">May</paper-item>
+          <paper-item value="06">June</paper-item>
+          <paper-item value="07">July</paper-item>
+          <paper-item value="08">Aug</paper-item>
+          <paper-item value="09">Sep</paper-item>
+          <paper-item value="10">Oct</paper-item>
+          <paper-item value="11">Nov</paper-item>
+          <paper-item value="12">Dec</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
 
-        <paper-dropdown-menu id="month" class="month" value="[[month]]" name="month" label="Month" no-label-float>
-          <paper-listbox id="monthListbox" class="dropdown-content" attr-for-selected="value" selected="{{month}}">
-            <paper-item label="" value="">Pick</paper-item>
-            <paper-item value="01">Jan</paper-item>
-            <paper-item value="02">Feb</paper-item>
-            <paper-item value="03">Mar</paper-item>
-            <paper-item value="04">Apr</paper-item>
-            <paper-item value="05">May</paper-item>
-            <paper-item value="06">June</paper-item>
-            <paper-item value="07">July</paper-item>
-            <paper-item value="08">Aug</paper-item>
-            <paper-item value="09">Sep</paper-item>
-            <paper-item value="10">Oct</paper-item>
-            <paper-item value="11">Nov</paper-item>
-            <paper-item value="12">Dec</paper-item>
-          </paper-listbox>
-        </paper-dropdown-menu>
+      <paper-input id="year"
+          class="year"
+          maxlength="4"
+          value="{{year}}"
+          label="Year"
+          auto-validate
+          no-label-float>
+      </paper-input>
 
-        <paper-input id="year" id="year" class="year" maxlength="4" value="{{year}}" label="Year" error-message="Invalid!" no-label-float></paper-input>
-
-        <template is="dom-if" if="[[invalid]]">
-          <paper-input-error aria-live="assertive">[[errorMessage]]</paper-input-error>
-        </template>
-      </div>
-
+      <template is="dom-if" if="[[errorMessage]]">
+        <paper-input-error aria-live="assertive">[[errorMessage]]</paper-input-error>
+      </template>
     </div>
   </template>
 
   <script>
     Polymer({
-
       is: 'hot-date-picker',
 
       properties: {
-
-
-        day: {
-          type: String,
-        },
-        month: {
-          type: String,
-        },
-        year: {
-          type: String,
-        },
-
+        day: String,
+        month: String,
+        year: String,
         invalid: {
           type: Boolean,
           default: false,
           observer: '_invalidChanged'
         },
-
       },
 
       behaviors: [
@@ -129,27 +134,23 @@ Minimal date picker
         '_dateChanged(day,month,year)',
       ],
 
-      _oneFieldSet: function(){
-        return !!( this.$.day.value || this.$.month.value || this.$.year.value );
+      _oneFieldSet: function() {
+        return !!(this.$.day.value || this.$.month.value || this.$.year.value);
       },
 
-      ready: function(){
-
-        //this._labelExtra= this.valueSetConfirmation;
+      ready: function() {
         var el = this;
 
-        this.$.year.inputElement.validate = function(){
-
+        this.$.year.inputElement.validate = function() {
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( this.value == '' ) {
+          if (this.value === '') {
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
 
-
           // It must be 4 characters
-          if( this.value.length != 4 ){
+          if (this.value.length != 4) {
             this.invalid = true;
             return !this.invalid;
           }
@@ -159,15 +160,13 @@ Minimal date picker
           return !this.invalid;
         };
 
-
-        this.$.month.validate = function(){
-
+        this.$.month.validate = function() {
           // Value will depend on selected month
           var value = el.$.monthListbox.selected;
 
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( !value || value == '' ){
+          if (!value || value === '') {
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
@@ -176,12 +175,10 @@ Minimal date picker
           return !this.invalid;
         };
 
-
-        this.$.day.inputElement.validate = function(){
-
+        this.$.day.inputElement.validate = function() {
           // Value is empty: invalid if main element is required or one field
           // is set
-          if( this.value == '' ){
+          if (this.value === '') {
             this.invalid = !!el.required || el._oneFieldSet();
             return !this.invalid;
           }
@@ -194,7 +191,7 @@ Minimal date picker
           }
 
           // Day cannot be below 0 regardless
-          if( day <= 0 ){
+          if (day <= 0) {
             this.invalid = true;
             return !this.invalid;
           }
@@ -203,8 +200,8 @@ Minimal date picker
           var month = el.$.monthListbox.selected;
 
           // We we don't have the month, we will go with a standard "31"
-          if( ! month ){
-            if(  day > 31 ){
+          if (!month) {
+            if (day > 31) {
               this.invalid = true;
               return !this.invalid;
             }
@@ -212,30 +209,27 @@ Minimal date picker
 
           // We have the month: doing "proper" validation, using a default
           // non-leap year if the year isn't available
-          if( day > numberOfDays( el.year || 2001, month) ){
+          if (day > numberOfDays(el.year || 2001, month)) {
             this.invalid = true;
             return !this.invalid;
           }
 
           this.invalid = false;
           return !this.invalid;
-        }
+        };
       },
-
 
       /*
        * Reflect changes to day, month or year back to the global element's value
-       *
-      */
-      _dateChanged: function(){
-
+       */
+      _dateChanged: function() {
         this._protectDayMonthYear = true;
 
-        if( !this.day || !this.month || !this.year ){
+        if (!this.day || !this.month || !this.year) {
           this.value = '';
         } else {
-          var formattedDay = this.day.length == 1  ?  "0" + this.day : this.day;
-          this.value = this.year + "-" + this.month + '-' + formattedDay;
+          var formattedDay = this.day.length == 1 ? "0" + this.day : this.day;
+          this.value = [this.year, this.month, formattedDay].join('-');
         }
 
         this.validate();
@@ -244,18 +238,17 @@ Minimal date picker
 
       /*
        * Reflect changes to value back to day, month and year
-       *
-      */
-      _valueChanged: function( v ){
+       */
+      _valueChanged: function(v) {
         var m;
 
-        if( this._protectDayMonthYear ) return;
+        if (this._protectDayMonthYear) return;
 
-        if( v && v.match ){
-          if( m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m) ){
-            this.day = m[ 3 ];
-            this.month = m[ 2] ;
-            this.year = m[ 1 ];
+        if (v && v.match) {
+          if (m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/m)) {
+            this.day = m[3];
+            this.month = m[2] ;
+            this.year = m[1];
           }
         } else {
           this.day ='';
@@ -266,26 +259,21 @@ Minimal date picker
         this.validate();
       },
 
-      // If invalid is set to "true", it will artificially invalidate _all_ fields
-      _invalidChanged: function(){
-        if( this.invalid ){
-          this.$.day.invalid = true;
-          this.$.month.invalid = true;
-          this.$.year.invalid = true;
-        } else {
-          this.$.day.invalid = false;
-          this.$.month.invalid = false;
-          this.$.year.invalid = false;
-        }
+      /*
+       * If invalid is set to "true", it will artificially invalidate _all_ fields
+       */
+      _invalidChanged: function() {
+        this.$.day.invalid = this.invalid || false;
+        this.$.month.invalid = this.invalid || false;
+        this.$.year.invalid = this.invalid || false;
       },
 
       /*
        * Validate function; validation is TOTALLY delegated to the
        * sub-elements. They will do all of work of checking if they should be
        * set (if the parent is required, or if at least ONE sibling is set)
-      */
-      validate: function(){
-
+       */
+      validate: function() {
         this.$.day.validate();
         this.$.month.validate();
         this.$.year.validate();
