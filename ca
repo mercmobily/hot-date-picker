@@ -27,7 +27,6 @@ Minimal date picker
 
         --paper-input-container: {
           padding-top: 0; /* No space for input labels, since we don't have them */
-          padding-bottom: 0;
         };
       }
       label {
@@ -104,11 +103,11 @@ Minimal date picker
           auto-validate
           no-label-float>
       </paper-input>
-    </div>
 
-    <template is="dom-if" if="[[errorMessage]]">
+      <paper-input-error aria-live="assertive" invalid>Stocazzo date picker</paper-input-error>
       <paper-input-error aria-live="assertive" invalid$="[[invalid]]">[[errorMessage]]</paper-input-error>
-    </template>
+
+    </div>
   </template>
 
   <script>
